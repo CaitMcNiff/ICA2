@@ -5,8 +5,6 @@ import pandas as pd
 
 ### Start of function definition 
 
-print("Ready to begin")
-
 # function to make sure taxonID input is an integer
 def check_integer(input_variable):
     try:
@@ -57,7 +55,7 @@ def protein_check():
         # checking there is at least 1 row in file
         if prot_check > 0:
             print("Great,", prot_check, "sequences were found for" , protein, "in the NCBI database.")
-            return
+            return 
         else:
             print("\nThere were no results for that protein in the NCBI database. Please make sure you entered your protein name correctly.")
         continue
@@ -67,16 +65,17 @@ def protein_check():
 def seq_count():
     while True:
         # retrieving the accension numbers for the defined taxon and protein family and outputting it to a file called accn.txt
-        subprocess.getoutput("esearch -db protein -query '" + protein + " [PROT] AND txid" + taxonID + " [ORGN]' NOT (predicted OR hypothetical)' | esummary | xtract -pattern DocumentSummary -element AccessionVersion > accn.txt")
+        subprocess.getoutput("esearch -db protein -query '" + protein + "[PROT] AND txid" + str(taxonID) + "[Organism:exp] NOT (predicted OR hypothetical)' | esummary | xtract -pattern DocumentSummary -element AccessionVersion > accn.txt")
         # reading in the accn file 
         with open("accn.txt") as accession_file:
             accession_numbers = accession_file.read()
+        line_count = accession_numbers.count("\n")
         # checking the number of sequences from the query 
-        if accession_numbers.count("\n") < 1000:
-            print("\nYour query resulted in", accession_numbers.count("\n"), "protein sequences.")
+        if line_count < 1000:
+            print("\nYour query resulted in", line_count, "protein sequences.")
             return
         else:
-            q = input("\nYour query resulted in", accession_numbers.count("\n"), "protein sequences. That is quite a few sequences, are you sure you would like to carry on with these parameters? y/n").lower()
+            q = input("\nYour query resulted in over 1000 protein sequences. That is quite a few sequences, are you sure you would like to carry on with these parameters? y/n\n").lower()
             if q == 'y':
                 print("Okay, if youre sure.")
                 return
@@ -93,28 +92,12 @@ print("Ready to begin")
 # defining taxon name and taxonID as the outputs from the tax_name function
 taxon_name, taxonID = tax_name()
 
-# defining the protein name of interest
-protein = input("Please specify the name of the protein family of interest:\n")
-
-# checking that the protein exists by seeing if there are results fetched from the NCBI library, counting the number of lines and saving this number as the variable prot_check
-#prot_check = int(subprocess.getoutput("esearch -db protein -query '" + protein +  " [PROT] NOT PARTIAL' | efetch -format uid | wc -l"))
-
-#if prot_check > 0:
-#    print("Great,", prot_check, "sequences were found for" , protein, "in the NCBI database.")
-#else:
-#    print("\nThere were no results for that protein in the NCBI database. Please make sure you entered your protein name correctly.")
-
-
-# retrieving the accesssion numbers for the defined taxon and protein family and outputting it to a file called accn.txt
-subprocess.getoutput("esearch -db protein -query '" + protein + " [PROT] AND txid" + taxonID + " [ORGN]' NOT (predicted OR hypothetical)' | esummary | xtract -pattern DocumentSummary -element AccessionVersion > accn.txt")
-# reading in the accn file 
-with open("accn.txt") as accession_file:
-    accession_numbers = accession_file.read()
+protein = protein_check()
 
 seq_count()
 
 
 # retrieving the sequences for the defined taxon and protein family
-subprocess.getoutput("esearch -db protein -query '", protein,  " [PROT] AND txid", taxonID, " [ORGN] NOT (predicted OR hypothetical)' | efetch -format fasta > ", protein + str(taxonID),".fasta")
+#subprocess.getoutput("esearch -db protein -query '", protein,  " [PROT] AND txid", taxonID, " [ORGN] NOT (predicted OR hypothetical)' | efetch -format fasta > ", protein + str(taxonID),".fasta")
 
 
