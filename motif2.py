@@ -29,14 +29,41 @@ def split_seq(input_file, accn_file):
 
 split_seq("glucose-6-phosphatase_txid8782.fasta", "accn.txt")
 
-# run the PROSITE motif search 
+# making a directory for the patmatmotifs output files to go into
+os.makedirs("motifs", exist_ok=True)
+
+# run the PROSITE motif search using patmatmotifs
 with open("accn.txt", 'r') as accn_file:
     for accn in accn_file:
         accn = accn.strip()
         # Use patmatmotifs to search for motifs in the chosen sequence file
-        subprocess.call("patmatmotifs -sequence " + accn + ".fasta -outfile " + accn + "_res.patmatmotifs -full -auto Yes", shell = True)
+        subprocess.call("patmatmotifs -sequence " + accn + ".fasta -outfile motifs/" + accn + "_res.patmatmotifs -full -auto Yes", shell = True)
         # You can add additional processing steps or print statements here if needed
         print(f"Motif search for {accn} completed.")
 
+#creating an output file for the sequences with motif hits
+output_file = 'motifs_hits.txt'
+dir_path = 'motifs/'
 
+# opening the output file in write mode
+with open(output_file, 'w') as output:
+    # loop through all files in the directory
+    for filename in os.listdir(dir_path):
+        # check if the file ends with .patmatmotifs
+        if filename.endswith('.patmatmotifs'):
+            file_path = os.path.join(dir_path, filename)
+            # opening the patmatmotifs file and check for the condition
+            with open(file_path, 'r') as file:
+                for line in file:
+                    line = line.strip()
+                    if line.startswith('# HitCount:') and not line.startswith('# HitCount: 0'):
+                        # If the condition is met, write the filename to the output file
+                        output.write(filename + '\n')
+                        break  # Break out of the loop once a match is found
+
+# Print a message indicating the process is complete
+print("Files with motif hits written to:", output_file)
+with open("motifs_hits.txt", 'r') as hits:
+    x = len(hits.readlines())
+    print('Number of files that have one or more motif hits:', x)
 
